@@ -2,7 +2,7 @@
 
 Welcome to **Twitch Tools**, a modernized and refactored suite of client-side utilities designed to help Twitch streamers and moderators manage their communities with greater efficiency and ease. This project provides powerful tools that interact directly with the Twitch API, all wrapped in a clean, user-friendly interface.
 
-![Follower Remover Tool Screenshot](https://i.imgur.com/example.png) ---
+---
 
 ## ✨ Features
 
@@ -103,4 +103,4 @@ This tool guides you through a safe, three-step process to remove unwanted follo
 
 ## 📜 License
 
-This project is open-source and available under the [MIT License](LICENSE). ```
+This project is open-source and available under the [MIT License](LICENSE).

@@ -1,6 +1,6 @@
 /**
  * @file Manages the logic for the Twitch Follower Remover wizard.
- * @author CommanderRoot (Refactored by Gemini)
+ * @author CommanderRoot
  * @version 3.0.0
  */
 

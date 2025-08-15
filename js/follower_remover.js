@@ -38,6 +38,7 @@ $(document).ready(function() {
 
   // Preset Buttons
   $('#filterKnownBots').on('click', applyKnownBotsPreset);
+  $('#filterRecent').on('click', applyRecentFollowersPreset);
 
   // Initialize plugins
   jQuery('#dateFollowedFrom, #dateFollowedTo').datetimepicker({
@@ -77,7 +78,10 @@ async function loadKnownBots() {
  * Resets the state and starts the first fetch.
  */
 function handleFindFollowers() {
-  if (STATE.isFetching) return;
+  if (STATE.isFetching || !twitch.getUserId()) {
+    bootbox.alert("Please log in with Twitch first.");
+    return;
+  }
 
   // Reset state for a new search
   STATE.followers = [];
@@ -195,13 +199,15 @@ function handleConfirmRemoval() {
         return;
     }
 
-    bootbox.confirm({
-        title: "⚠️ Confirm Removal",
-        message: `You are about to permanently remove <strong>${count} followers</strong>. This action cannot be undone.<br><br>Please type <strong>REMOVE</strong> to confirm.`,
-        callback: function(result) {
-            if (result) {
-                // This is a basic confirmation. For production, you'd check the typed input.
+    bootbox.prompt({
+        title: `⚠️ Confirm Removal of ${count} Followers`,
+        message: `<p>This action is irreversible. To proceed, please type <strong>REMOVE</strong> into the box below.</p>`,
+        inputType: 'text',
+        callback: function (result) {
+            if (result && result.trim().toUpperCase() === 'REMOVE') {
                 processRemovalQueue();
+            } else {
+                bootbox.alert("Incorrect confirmation text. Aborting removal.");
             }
         }
     });
@@ -216,23 +222,18 @@ async function processRemovalQueue() {
     updateUIState();
     
     const userIds = Array.from(STATE.usersToRemove);
-    const batchSize = 5; // Small batch size to be safe
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < userIds.length; i++) {
-        const userId = userIds[i];
+    for (const userId of userIds) {
         try {
-            // NOTE: This requires a backend implementation. The Helix API does not
-            // allow follower removal from the client-side for security reasons.
-            // This is a placeholder for a call to your own secure backend.
-            // await yourBackend.removeFollower(twitch.getUserId(), userId);
-            
-            // Simulating API call
-            await new Promise(resolve => setTimeout(resolve, 200)); 
+            // NOTE: The Twitch API requires a user access token with the
+            // 'moderator:manage:blocked_terms' scope to remove followers.
+            // This is a placeholder for the actual API call.
+            await twitch.removeFollower(userId);
             
             // Update UI on success
-            $(`#user-${userId}`).addClass('list-group-item-success').fadeOut(1000, function() { $(this).remove(); });
+            $(`#user-${userId}`).addClass('list-group-item-success').fadeOut(1000, () => $(this).remove());
             successCount++;
         } catch (error) {
             console.error(`Failed to remove ${userId}:`, error);
@@ -241,13 +242,14 @@ async function processRemovalQueue() {
         }
         STATE.usersToRemove.delete(userId);
         updateSummary();
+        // A small delay between requests to be courteous to the API
+        await new Promise(resolve => setTimeout(resolve, 250));
     }
     
     STATE.isRemoving = false;
     updateUIState();
     bootbox.alert(`Removal complete! Successfully removed: ${successCount}. Failed: ${errorCount}.`);
 }
-
 
 // --- UI State and Helper Functions ---
 
@@ -262,6 +264,10 @@ function updateUIState() {
       $('#step1-loader').show();
   } else {
       $('#step1-loader').hide();
+  }
+  // Ensure non-loading buttons are re-enabled
+  if (!isLoading) {
+      $('button').prop('disabled', false);
   }
 }
 
@@ -297,15 +303,27 @@ function selectAllVisible(isSelected) {
 
 /**
  * Applies the "Known Bots" filter preset.
+ * This is a client-side filter approximation.
  */
 function applyKnownBotsPreset() {
     if (STATE.knownBots.size === 0) {
-        bootbox.alert("Known bots list is not available.");
+        bootbox.alert("Known bots list is not available or still loading.");
         return;
     }
-    // This is a simplified preset. A real implementation might fetch only these users.
-    const botUsernames = Array.from(STATE.knownBots).slice(0, 100).join('|');
-    $('#usernameFilter').val(botUsernames.replace(/,/g, '|')); // Using OR logic
+    bootbox.alert("This will find followers whose usernames are on the known bot list. Note: This only checks followers as they are loaded.");
+    // This is a simple regex to match any bot name.
+    const botUsernamesRegex = Array.from(STATE.knownBots).join('|');
+    $('#usernameFilter').val(botUsernamesRegex);
     $('#dateFollowedFrom, #dateFollowedTo').val('');
-    handleFindFollowers();
+}
+
+/**
+ * Applies a preset to find followers from the last 24 hours.
+ */
+function applyRecentFollowersPreset() {
+    const now = moment();
+    const yesterday = moment().subtract(24, 'hours');
+    $('#dateFollowedFrom').val(yesterday.format('YYYY-MM-DD HH:mm'));
+    $('#dateFollowedTo').val(now.format('YYYY-MM-DD HH:mm'));
+    $('#usernameFilter').val('');
 }

@@ -1,0 +1,49 @@
+/*
+ * File: style.css
+ * Description: Global styles for Twitch Tools.
+ */
+
+body {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+}
+
+.card {
+    border: 1px solid #444;
+}
+
+.card-header, .card-body {
+    border-bottom: 1px solid #444;
+}
+
+.list-group-item.bg-dark {
+    background-color: #2c2c2c !important;
+    border-color: #444;
+}
+
+.list-group-item.bg-dark:hover {
+    background-color: #383838 !important;
+}
+
+a {
+    color: #a970ff;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #be9eff;
+    text-decoration: underline;
+}
+
+.navbar {
+    background-color: #18181b !important; /* Twitch dark purple */
+}
+
+.footer {
+    padding: 20px 0;
+    margin-top: 40px;
+    background-color: #18181b;
+    border-top: 1px solid #444;
+    text-align: center;
+    color: #aaa;
+}
